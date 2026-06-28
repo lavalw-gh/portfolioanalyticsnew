@@ -208,8 +208,25 @@ def _show_portfolio(results: dict, portfolio_name: str) -> None:
     )
 
     st.subheader("Holdings")
+    hide_values = st.checkbox(
+        "Hide values",
+        value=True,
+        help="Masks share counts, costs, values, and totals in the on-page holdings table only.",
+    )
+    holdings_df = pdata.get("holdings_df", pd.DataFrame())
+    if hide_values and isinstance(holdings_df, pd.DataFrame) and not holdings_df.empty:
+        holdings_df = holdings_df.copy()
+        masked_columns = [
+            column
+            for column in holdings_df.columns
+            if str(column).strip() in {"Shares", "Cost (Â£)", "Value (Â£)"}
+            or str(column).strip().startswith("Cost (")
+            or str(column).strip().startswith("Value (")
+        ]
+        for column in masked_columns:
+            holdings_df[column] = "****"
     st.dataframe(
-        pdata.get("holdings_df", pd.DataFrame()),
+        holdings_df,
         use_container_width=True,
         hide_index=True,
     )

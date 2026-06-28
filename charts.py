@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 VALUE_BLUE = "#2563EB"
-RETURN_GREEN = "#059669"
+RETURN_GREEN = "#047857"
 BENCHMARK_AMBER = "#D97706"
 
 
