@@ -1,0 +1,6 @@
+pandas
+yfinance
+python-docx
+streamlit
+altair
+vl-convert-python
