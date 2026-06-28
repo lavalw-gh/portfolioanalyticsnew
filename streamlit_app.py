@@ -154,8 +154,35 @@ def _build_docx_bytes(results: dict) -> bytes:
         return output_path.read_bytes()
 
 
-def _default_docx_name() -> str:
+def _results_for_portfolios(results: dict, portfolio_names: list[str]) -> dict:
+    filtered = dict(results)
+    selected_names = [
+        name
+        for name in portfolio_names
+        if name in results.get("portfolio_data", {})
+    ]
+    filtered["selected_names"] = selected_names
+    filtered["portfolio_data"] = {
+        name: results.get("portfolio_data", {})[name]
+        for name in selected_names
+    }
+    calculations_df = results.get("calculations_export_df")
+    if isinstance(calculations_df, pd.DataFrame) and "Portfolio" in calculations_df.columns:
+        filtered["calculations_export_df"] = calculations_df[
+            calculations_df["Portfolio"].isin(selected_names)
+        ].copy()
+    return filtered
+
+
+def _default_docx_name(portfolio_name: str | None = None) -> str:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if portfolio_name:
+        safe_name = "".join(
+            c if c.isalnum() or c in ".-_"
+            else "_"
+            for c in portfolio_name
+        )
+        return f"portfolio_analysis_{safe_name}_{stamp}.docx"
     return f"portfolio_analysis_{stamp}.docx"
 
 
@@ -197,6 +224,31 @@ def _show_portfolio(results: dict, portfolio_name: str) -> None:
 
 def main() -> None:
     st.set_page_config(page_title=APP_TITLE, layout="wide")
+    st.markdown(
+        """
+        <style>
+        [data-testid="stMain"] .stButton button,
+        [data-testid="stMain"] .stDownloadButton button {
+            background-color: #d97706;
+            border-color: #b45309;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        [data-testid="stMain"] .stButton button:hover,
+        [data-testid="stMain"] .stDownloadButton button:hover {
+            background-color: #b45309;
+            border-color: #92400e;
+            color: #ffffff;
+        }
+        [data-testid="stMain"] .stButton button:focus,
+        [data-testid="stMain"] .stDownloadButton button:focus {
+            box-shadow: 0 0 0 0.2rem rgba(217, 119, 6, 0.25);
+            color: #ffffff;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     st.title(APP_TITLE)
 
     with st.sidebar:
@@ -347,16 +399,34 @@ def main() -> None:
             f"{results.get('start_effective')} to {results.get('end_effective')}",
         )
     with cols[1]:
-        export_clicked = st.button("Export to Word", use_container_width=True)
-        if export_clicked:
+        current_export_clicked = st.button(
+            "Export current portfolio to Word",
+            use_container_width=True,
+            disabled=not bool(selected_portfolio),
+        )
+        all_export_clicked = st.button(
+            "Export all portfolios to Word",
+            use_container_width=True,
+            disabled=not bool(display_names),
+        )
+        if current_export_clicked and selected_portfolio:
+            try:
+                export_results = _results_for_portfolios(results, [selected_portfolio])
+                st.session_state["docx_bytes"] = _build_docx_bytes(export_results)
+                st.session_state["docx_name"] = _default_docx_name(selected_portfolio)
+                st.session_state["docx_label"] = f"Download Word document - {selected_portfolio}"
+            except Exception as exc:
+                st.error(f"Export failed: {exc}")
+        if all_export_clicked:
             try:
                 st.session_state["docx_bytes"] = _build_docx_bytes(results)
                 st.session_state["docx_name"] = _default_docx_name()
+                st.session_state["docx_label"] = "Download Word document - all portfolios"
             except Exception as exc:
                 st.error(f"Export failed: {exc}")
         if st.session_state.get("docx_bytes"):
             st.download_button(
-                "Download Word document",
+                st.session_state.get("docx_label", "Download Word document"),
                 data=st.session_state["docx_bytes"],
                 file_name=st.session_state.get("docx_name", _default_docx_name()),
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

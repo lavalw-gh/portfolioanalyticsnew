@@ -4,6 +4,10 @@ from pathlib import Path
 
 import pandas as pd
 
+VALUE_BLUE = "#2563EB"
+RETURN_GREEN = "#059669"
+BENCHMARK_AMBER = "#D97706"
+
 
 def _chart_dataframe(
     pdata: dict,
@@ -81,13 +85,13 @@ def make_portfolio_altair_chart(
         title="Portfolio Value (GBP)",
         orient="left",
         format=",.0f",
-        titleColor="#1f77b4",
-        labelColor="#1f77b4",
+        titleColor=VALUE_BLUE,
+        labelColor=VALUE_BLUE,
     )
-    value_area = base.mark_area(color="#1f77b4", opacity=0.22).encode(
+    value_area = base.mark_area(color=VALUE_BLUE, opacity=0.20).encode(
         y=alt.Y("Portfolio Value:Q", axis=value_axis)
     )
-    value_line = base.mark_line(color="#1f77b4", opacity=0.65, strokeWidth=1.5).encode(
+    value_line = base.mark_line(color=VALUE_BLUE, opacity=0.70, strokeWidth=1.5).encode(
         y=alt.Y("Portfolio Value:Q", axis=value_axis)
     )
 
@@ -109,15 +113,15 @@ def make_portfolio_altair_chart(
                     title="Cumulative Return (%)",
                     orient="right",
                     format=".1f",
-                    titleColor="#d62728",
-                    labelColor="#d62728",
+                    titleColor=RETURN_GREEN,
+                    labelColor=RETURN_GREEN,
                 ),
             ),
             color=alt.Color(
                 "Series:N",
                 scale=alt.Scale(
                     domain=["Portfolio Return", "Benchmark Return"],
-                    range=["#d62728", "#ff7f0e"],
+                    range=[RETURN_GREEN, BENCHMARK_AMBER],
                 ),
                 legend=alt.Legend(title=None, orient="top-left"),
             ),
