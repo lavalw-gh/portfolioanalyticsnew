@@ -3,10 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+import types
 
 if __package__ in (None, ""):
     package_root = Path(__file__).resolve().parent
-    sys.path.insert(0, str(package_root.parent))
+    package = types.ModuleType("portfolio_analyzer")
+    package.__path__ = [str(package_root)]
+    sys.modules.setdefault("portfolio_analyzer", package)
     from portfolio_analyzer.constants import APP_TITLE
 else:
     from .constants import APP_TITLE

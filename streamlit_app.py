@@ -5,6 +5,7 @@ from hashlib import sha256
 from pathlib import Path
 import sys
 import tempfile
+import types
 
 import pandas as pd
 import streamlit as st
@@ -12,7 +13,9 @@ import streamlit as st
 
 if __package__ in (None, ""):
     package_root = Path(__file__).resolve().parent
-    sys.path.insert(0, str(package_root.parent))
+    package = types.ModuleType("portfolio_analyzer")
+    package.__path__ = [str(package_root)]
+    sys.modules.setdefault("portfolio_analyzer", package)
     from portfolio_analyzer.analysis_job import run_analysis_job
     from portfolio_analyzer.charts import make_portfolio_altair_chart
     from portfolio_analyzer.constants import (
